@@ -65,6 +65,9 @@ Etapes:
           push: true
           tags: mathisdacruz/tp1:0.2.2
 ```
+
+Apres verification sur github action, la tache a bien ete effectue suite au commit !
+
 ---
 
 ## 2. API
