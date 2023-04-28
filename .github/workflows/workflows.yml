@@ -9,8 +9,8 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
       - name: Build image
-        run: docker build -t tp2_image:0.2 .
+        run: docker build -t tp2_image:0.2.2 .
       - name: Push to DockerHub
         run: |
           echo ${{ secrets.DOCKER_PASSWORD }} | docker login -u $DOCKER_USERNAME --password-stdin
-          docker tp2_image:0.2
+          docker tp2_image:0.2.2
