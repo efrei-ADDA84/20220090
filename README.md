@@ -78,23 +78,23 @@ CMD python tp1.py
 On construit une nouvelle image Docker en se basant sur le contenu du Dockerfile présent dans le répertoire courant
 
 ```
-docker build -t tp1_image .
+docker build -t tp1_image:0.1 .
 ```
 
 On renomme l'image afin de préparer l'image à être téléchargée sur DockerHub
 
 ```
-docker tag tp1_image  mathisdacruz/tp1
+docker tag tp1_image:0.1  mathisdacruz/tp1:0.1
 ```
 
 On publie l'image sur DockerHub
 
 ```
-docker push mathisdacruz/tp1
+docker push mathisdacruz/tp1:0.1
 ```
 
 On lance un conteneur à partir de l'image Docker en definissant les variables d'environnement
 
 ```
-docker run --env LAT="31.2504" --env LONG="-99.2506" --env API_KEY="2161992f8e11948a5c0804c922c44d1b" mathisdacruz/tp1:latest
+docker run --env LAT="31.2504" --env LONG="-99.2506" --env API_KEY="2161992f8e11948a5c0804c922c44d1b" mathisdacruz/tp1:0.1
 ```
