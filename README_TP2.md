@@ -116,3 +116,52 @@ La commande suivante fonctionne bien
 ```
 curl "http://localhost:8081/weather?lat=5.902785&lon=102.754175"
 ```
+
+Output
+
+```
+{
+  "base": "stations",
+  "clouds": {
+    "all": 100
+  },
+  "cod": 200,
+  "coord": {
+    "lat": 5.9028,
+    "lon": 102.7542
+  },
+  "dt": 1682688551,
+  "id": 1736405,
+  "main": {
+    "feels_like": 30.3,
+    "grnd_level": 981,
+    "humidity": 76,
+    "pressure": 1008,
+    "sea_level": 1008,
+    "temp": 27.45,
+    "temp_max": 27.45,
+    "temp_min": 27.45
+  },
+  "name": "Jertih",
+  "sys": {
+    "country": "MY",
+    "sunrise": 1682636226,
+    "sunset": 1682680546
+  },
+  "timezone": 28800,
+  "visibility": 10000,
+  "weather": [
+    {
+      "description": "overcast clouds",
+      "icon": "04n",
+      "id": 804,
+      "main": "Clouds"
+    }
+  ],
+  "wind": {
+    "deg": 78,
+    "gust": 4.07,
+    "speed": 3.78
+  }
+}
+```
