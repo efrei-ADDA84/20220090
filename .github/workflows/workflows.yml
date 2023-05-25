@@ -32,6 +32,9 @@ jobs:
         with:
           resource-group: ${{ secrets.RESOURCE_GROUP }}
           dns-name-label: devops-20220090
-          location: westeurope
-          image: efreidevops.azurecr.io/20220090:v1
+          image: ${{ secrets.REGISTRY_LOGIN_SERVER }}/20220090:v1
+          registry-login-server: ${{ secrets.REGISTRY_LOGIN_SERVER }}
+          registry-username: ${{ secrets.REGISTRY_USERNAME }}
+          registry-password: ${{ secrets.REGISTRY_PASSWORD }}
           name: 20220090
+          location: 'west europe'
