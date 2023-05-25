@@ -32,6 +32,6 @@ jobs:
         with:
           resource-group: ${{ secrets.RESOURCE_GROUP }}
           dns-name-label: devops-20220090
-          location: francecentral
+          location: westeurope
           image: efreidevops.azurecr.io/20220090:v1
           name: 20220090
