@@ -24,8 +24,8 @@ jobs:
           username: ${{ secrets.REGISTRY_USERNAME }}
           password: ${{ secrets.REGISTRY_PASSWORD }}
           run: |
-          docker build .-t efreidevops.azurecr.io/20220090:v1
-          docker push efreidevops.azurecr.io/20220090:v1
+            docker build .-t efreidevops.azurecr.io/20220090:v1
+            docker push efreidevops.azurecr.io/20220090:v1
 
       - name: Deploy to Azure Container Instance (ACI)
         uses: azure/aci-deploy@v1
