@@ -1,124 +1,123 @@
-# TP2 20220090 Mathis Da Cruz 
+# TP3 20220090 Mathis Da Cruz 
 
-## Questions
+## Objectifs
 
-* Configurer un workflow Github Action
-* Transformer un wrapper en API
-* Publier automatiquement a chaque push sur Docker Hub
-* Mettre à disposition son image (format API) sur DockerHub
-* Mettre à disposition son code dans un repository Github
+* Mettre à disposition son image (format API) sur Azure Container Registry (ACR) using
+Github Actions
+* Deployer sur Azure Container Instance (ACI) using Github Actions
 
 ---
 
 ## 1. Workflow
 
-Nom de l'action et son périmètre, ici branche main
+Le code suivant construit et déploie une image Docker sur une instance de conteneur Azure (ACI). 
+
+Etapes:
+* Il utilise l'action azure/login@v1 pour s'authentifier auprès d'Azure
 
 ```
-name: Build and Push
+name: Azure
 
 on:
   push:
-    branches: [main]
-```
-Nature de la tache (build and publish) et a executer sur ubuntu
+    branches:
+      - main
 
-```
 jobs:
-  build-and-publish:
+  build-and-deploy:
     runs-on: ubuntu-latest
-```
-
-Etapes:
-1. On recupere le code source
-
-```
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v2
-```
 
-2. On build l'image 
-
-```
-      - name: Build
-        run: docker build -t tp2_image:0.2.2 .
-```
-
-3. Connexion a docker a l'aide des infos d'identification stockées dans les secrets GitHub.
-
-```
-      - name: Login
-        uses: docker/login-action@v1
+      - name: Login to Azure
+        uses: azure/login@v1
         with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
 ```
 
-4. On push l'image sur Docker
+* L'action azure/docker-login@v1 pour se connecter au registre de conteneurs
+* Construit une image Docker et la pousse dans le registre de conteneurs. 
 
 ```
-      - name: Push
-        uses: docker/build-push-action@v2
+      - name: Build and push Docker image
+        uses: azure/docker-login@v1
         with:
-          context: .
-          push: true
-          tags: mathisdacruz/tp1:0.2.2
+          login-server: ${{ secrets.REGISTRY_LOGIN_SERVER }}
+          username: ${{ secrets.REGISTRY_USERNAME }}
+          password: ${{ secrets.REGISTRY_PASSWORD }}
+      - run: |
+          docker build . -t ${{ secrets.REGISTRY_LOGIN_SERVER }}/20220090:v1
+          docker push ${{ secrets.REGISTRY_LOGIN_SERVER }}/20220090:v1
 ```
 
-Apres verification sur github action, la tache a bien ete effectue suite au commit !
+* Déploie l'image sur une instance de conteneur Azure avec l'action azure/aci-deploy@v1.
+
+```
+      - name: Deploy to Azure Container Instance (ACI)
+        uses: azure/aci-deploy@v1
+        with:
+          resource-group: ${{ secrets.RESOURCE_GROUP }}
+          dns-name-label: devops-20220090
+          image: ${{ secrets.REGISTRY_LOGIN_SERVER }}/20220090:v1
+          registry-login-server: ${{ secrets.REGISTRY_LOGIN_SERVER }}
+          registry-username: ${{ secrets.REGISTRY_USERNAME }}
+          registry-password: ${{ secrets.REGISTRY_PASSWORD }}
+          name: 20220090
+          location: westeurope
+          ports: 8081
+```
 
 ---
 
-## 2. API
+## 2. Script Python
 
-On repart du script python du tp1 en ajoutant quelques modifications
-Avec la librairies Flask on crée une application web
+Modifications apportées au script python:
+* Suppression de os.get_env pour récupérer l'api_key
+* On code l'api_key en dure dans l'url et on l'enlève des paramètres des fonctions
+* On enlève "weather" de @app.route
 
 ```
+import os
+import requests
 from flask import Flask, jsonify, request
+
 app = Flask(__name__)
-```
 
-* @app.route('/weather') : Décorateur de fonction Flask qui définit une route pour l'API (url/weather)
-* lat = request.args.get('lat') : On recupere l'argument de lat dans l'url afin d'appeler l'API avec
+def get_url(lat, lon):
+    return f'https://api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lon}&appid=2161992f8e11948a5c0804c922c44d1b&units=metric'   
 
-```
-@app.route('/weather')
+def get_weather(url):
+    response = requests.get(url)
+    return response.json()  
+
+@app.route('/')
 def weather():
     lat = request.args.get('lat')
     lon = request.args.get('lon')
-    url = get_url(lat, lon, api_key)
+    url = get_url(lat, lon)
     weather_data = get_weather(url)
     return jsonify(weather_data)
-```
 
-* debug=True : mode de débogage de Flask
-* host='0.0.0.0' : l'adresse IP est définie sur "0.0.0.0", donc depuis le localhost
-* port=8081 : définit le port sur lequel Flask doit écouter les requêtes entrantes
-
-```
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port= 8081)
+
 ```
+
 ---
 
-## 3. Commandes Docker
-
-On specifie le port 8081 defini precedemment
-
-```
-docker build -t tp2_image:0.2.2 .
-docker tag tp2_image:0.2.2 mathisdacruz/tp1:0.2.2
-docker push mathisdacruz/tp1:0.2.2
-docker run -p 8081:8081 --env API_KEY="2161992f8e11948a5c0804c922c44d1b" mathisdacruz/tp1:0.2.2
-```
+## 3. Résultat du curl
 
 La commande suivante fonctionne bien
 
 ```
-curl "http://localhost:8081/weather?lat=5.902785&lon=102.754175"
+curl "http://devops-20220090.westeurope.azurecontainer.io:8081/?lat=5.902785&lon=102.754175"
 ```
+
+On précise bien les paramètres propres a notre déploiement dans l'url:
+* La localisation : west europe
+* Le nom de domaine du DNS : devops-20220090
+* Le numéro de port : 8081
 
 Output
 
@@ -133,23 +132,23 @@ Output
     "lat": 5.9028,
     "lon": 102.7542
   },
-  "dt": 1682688551,
+  "dt": 1685032170,
   "id": 1736405,
   "main": {
-    "feels_like": 30.3,
-    "grnd_level": 981,
-    "humidity": 76,
-    "pressure": 1008,
-    "sea_level": 1008,
-    "temp": 27.45,
-    "temp_max": 27.45,
-    "temp_min": 27.45
+    "feels_like": 30.66,
+    "grnd_level": 985,
+    "humidity": 71,
+    "pressure": 1012,
+    "sea_level": 1012,
+    "temp": 27.93,
+    "temp_max": 27.93,
+    "temp_min": 27.93
   },
   "name": "Jertih",
   "sys": {
     "country": "MY",
-    "sunrise": 1682636226,
-    "sunset": 1682680546
+    "sunrise": 1685055206,
+    "sunset": 1685099928
   },
   "timezone": 28800,
   "visibility": 10000,
@@ -162,9 +161,9 @@ Output
     }
   ],
   "wind": {
-    "deg": 78,
-    "gust": 4.07,
-    "speed": 3.78
+    "deg": 73,
+    "gust": 2.06,
+    "speed": 1.87
   }
 }
 ```
